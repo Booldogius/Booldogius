@@ -71,7 +71,7 @@
   // --- distant, permanently-out-of-reach F's -----------------------------
   function drawHorizonFs() {
     const hY = horizonY();
-    const spacing = 130; // in "horizon units" — deliberately not tied to zoom
+    const spacing = 220; // in "horizon units" — deliberately not tied to zoom
     const farCam = camera.x * FAR_PARALLAX;
 
     const leftIdx = Math.floor((farCam - W / 2) / spacing) - 1;
@@ -85,18 +85,18 @@
     for (let i = leftIdx; i <= rightIdx; i++) {
       const exists = hash2(i, 5.2) > 0.62; // sparse
       if (!exists) continue;
-      const worldX = i * spacing + (hash2(i, 1.1) - 0.5) * spacing * 0.6;
+      const worldX = i * spacing + (hash2(i, 1.1) - 0.5) * spacing * 0.5;
       const screenX = W / 2 + (worldX - farCam);
-      if (screenX < -40 || screenX > W + 40) continue;
+      if (screenX < -80 || screenX > W + 80) continue;
 
       const bob = (hash2(i, 2.2) - 0.5) * 18;
       const screenY = hY - 6 - bob * 0.2 + hash2(i, 3.3) * 6;
-      const size = 12 + hash2(i, 4.4) * 6;
+      const size = 11 + hash2(i, 4.4) * 5;
       const alpha = 0.28 + hash2(i, 6.6) * 0.18;
 
       ctx.font = `700 ${size}px Georgia, "Times New Roman", serif`;
       ctx.fillStyle = `rgba(90, 76, 54, ${alpha})`;
-      ctx.fillText("F", screenX, screenY);
+      ctx.fillText("F*cks", screenX, screenY);
     }
     ctx.restore();
   }
