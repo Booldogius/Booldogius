@@ -16,6 +16,7 @@
   // ignores zoom, which is what keeps the distant F's from ever
   // "arriving" no matter how far or how close you look.
   const FAR_PARALLAX = 0.12;
+  const CLOUD_PARALLAX = 0.035; // slower than the horizon — clouds are further still
 
   let dpr = Math.max(1, window.devicePixelRatio || 1);
   let W = 0, H = 0; // css pixels
@@ -48,9 +49,9 @@
   function drawSky() {
     const hY = horizonY();
     const grad = ctx.createLinearGradient(0, 0, 0, hY);
-    grad.addColorStop(0, "#eae1c8");
-    grad.addColorStop(0.6, "#e9d9ab");
-    grad.addColorStop(1, "#e7cf95");
+    grad.addColorStop(0, "#6fb8e6");
+    grad.addColorStop(0.55, "#a9d8ef");
+    grad.addColorStop(1, "#e9f1e2");
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, W, hY);
 
@@ -58,14 +59,50 @@
     const sunX = W * 0.78 - camera.x * 0.02;
     const sunY = hY * 0.3;
     const sunGrad = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 70);
-    sunGrad.addColorStop(0, "rgba(255,246,214,0.9)");
-    sunGrad.addColorStop(1, "rgba(255,246,214,0)");
+    sunGrad.addColorStop(0, "rgba(255,250,224,0.9)");
+    sunGrad.addColorStop(1, "rgba(255,250,224,0)");
     ctx.fillStyle = sunGrad;
     ctx.fillRect(sunX - 90, sunY - 90, 180, 180);
     ctx.beginPath();
-    ctx.fillStyle = "#f7ecc9";
+    ctx.fillStyle = "#fdf6de";
     ctx.arc(sunX, sunY, 26, 0, Math.PI * 2);
     ctx.fill();
+  }
+
+  // --- wispy clouds, drifting far slower than anything on the ground -------
+  function drawClouds() {
+    const hY = horizonY();
+    const spacing = 240;
+    const camX = camera.x * CLOUD_PARALLAX;
+    const leftIdx = Math.floor((camX - W / 2) / spacing) - 1;
+    const rightIdx = Math.ceil((camX + W / 2) / spacing) + 1;
+
+    ctx.save();
+    ctx.filter = "blur(6px)";
+    for (let i = leftIdx; i <= rightIdx; i++) {
+      const exists = hash2(i, 20.1) > 0.25;
+      if (!exists) continue;
+      const worldX = i * spacing + (hash2(i, 21.2) - 0.5) * spacing * 0.5;
+      const screenX = W / 2 + (worldX - camX);
+      if (screenX < -220 || screenX > W + 220) continue;
+
+      const baseY = hY * (0.1 + hash2(i, 22.3) * 0.5);
+      const puffs = 3 + Math.floor(hash2(i, 23.4) * 3);
+      const widthScale = 60 + hash2(i, 24.5) * 70;
+      const alpha = 0.32 + hash2(i, 25.6) * 0.22;
+
+      ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+      for (let p = 0; p < puffs; p++) {
+        const px = screenX + (p - puffs / 2) * widthScale * 0.55 + (hash2(i, 30 + p) - 0.5) * 20;
+        const py = baseY + (hash2(i, 40 + p) - 0.5) * 10;
+        const rw = widthScale * (0.5 + hash2(i, 50 + p) * 0.5);
+        const rh = rw * 0.28;
+        ctx.beginPath();
+        ctx.ellipse(px, py, rw, rh, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    ctx.restore();
   }
 
   // --- distant, permanently-out-of-reach F's -----------------------------
@@ -255,6 +292,7 @@
   function render(now) {
     ctx.clearRect(0, 0, W, H);
     drawSky();
+    drawClouds();
     drawHorizonFs();
     drawGround();
     drawDirtTexture();
@@ -384,5 +422,24 @@
         camera.zoom = clampZoom(camera.zoom / 1.25);
         break;
     }
+  });
+
+  // --- info modal ------------------------------------------------------------
+  const infoModal = document.getElementById("infoModal");
+  const openInfo = () => {
+    infoModal.classList.remove("hidden");
+    infoModal.setAttribute("aria-hidden", "false");
+  };
+  const closeInfo = () => {
+    infoModal.classList.add("hidden");
+    infoModal.setAttribute("aria-hidden", "true");
+  };
+  document.getElementById("infoButton").addEventListener("click", openInfo);
+  document.getElementById("infoModalClose").addEventListener("click", closeInfo);
+  infoModal.addEventListener("click", (e) => {
+    if (e.target === infoModal) closeInfo();
+  });
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !infoModal.classList.contains("hidden")) closeInfo();
   });
 })();

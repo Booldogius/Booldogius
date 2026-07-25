@@ -25,6 +25,14 @@
     <button data-action="zoom-out" aria-label="zoom out">–</button>
     <button data-action="zoom-in" aria-label="zoom in">+</button>
     <button data-action="pan-right" aria-label="scroll right">›</button>
+    <button id="infoButton" aria-label="about this site" aria-haspopup="dialog">?</button>
+  </div>
+
+  <div id="infoModal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="infoModalText">
+    <div id="infoModalCard">
+      <button id="infoModalClose" aria-label="close">&times;</button>
+      <p id="infoModalText">The inspiration for this site is from a discussion between Red Rooster and PapaBear.</p>
+    </div>
   </div>
 
   <script src="script.js"></script>
