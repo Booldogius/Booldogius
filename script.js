@@ -106,9 +106,25 @@
   }
 
   // --- distant, permanently-out-of-reach F's -----------------------------
+  // multi-pass "ghost text" softening — avoids ctx.filter, which some
+  // mobile WebKit builds fail to render at all when combined with fillText.
+  function fillHazyText(text, x, y, alpha) {
+    const offsets = [
+      [0, 0],
+      [0.8, 0.4],
+      [-0.7, 0.5],
+      [0.4, -0.6],
+      [-0.4, -0.3],
+    ];
+    ctx.fillStyle = `rgba(90, 76, 54, ${alpha * 0.45})`;
+    for (const [ox, oy] of offsets) {
+      ctx.fillText(text, x + ox, y + oy);
+    }
+  }
+
   function drawHorizonFs() {
     const hY = horizonY();
-    const spacing = 220; // in "horizon units" — deliberately not tied to zoom
+    const spacing = 160; // in "horizon units" — deliberately not tied to zoom
     const farCam = camera.x * FAR_PARALLAX;
 
     const leftIdx = Math.floor((farCam - W / 2) / spacing) - 1;
@@ -117,12 +133,11 @@
     ctx.save();
     ctx.textAlign = "center";
     ctx.textBaseline = "alphabetic";
-    ctx.filter = "blur(1.1px)";
 
     for (let i = leftIdx; i <= rightIdx; i++) {
-      const exists = hash2(i, 5.2) > 0.62; // sparse
+      const exists = hash2(i, 5.2) > 0.45; // sparse, but reliable even on narrow screens
       if (!exists) continue;
-      const worldX = i * spacing + (hash2(i, 1.1) - 0.5) * spacing * 0.5;
+      const worldX = i * spacing + (hash2(i, 1.1) - 0.5) * spacing * 0.35;
       const screenX = W / 2 + (worldX - farCam);
       if (screenX < -80 || screenX > W + 80) continue;
 
@@ -132,8 +147,7 @@
       const alpha = 0.28 + hash2(i, 6.6) * 0.18;
 
       ctx.font = `700 ${size}px Georgia, "Times New Roman", serif`;
-      ctx.fillStyle = `rgba(90, 76, 54, ${alpha})`;
-      ctx.fillText("F*cks", screenX, screenY);
+      fillHazyText("F*cks", screenX, screenY, alpha);
     }
     ctx.restore();
   }
