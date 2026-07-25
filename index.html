@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Behold, My Barren Field of Fucks</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌾</text></svg>" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <canvas id="field"></canvas>
+
+  <header id="titleCard">
+    <h1>Behold, my barren field of fucks.</h1>
+    <p id="hint">drag / arrow keys to wander &nbsp;·&nbsp; scroll or pinch to zoom</p>
+  </header>
+
+  <div id="hud">
+    <div>Fucks given: <strong>0</strong></div>
+    <div>Distance to nearest F: <strong id="distReadout">—</strong></div>
+  </div>
+
+  <div id="controls">
+    <button data-action="pan-left" aria-label="scroll left">‹</button>
+    <button data-action="zoom-out" aria-label="zoom out">–</button>
+    <button data-action="zoom-in" aria-label="zoom in">+</button>
+    <button data-action="pan-right" aria-label="scroll right">›</button>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
