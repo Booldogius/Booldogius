@@ -107,6 +107,56 @@ html, body {
   background: rgba(255, 255, 255, 0.55);
 }
 
+#infoButton {
+  margin-left: 0.6rem;
+  font-weight: 700;
+}
+
+#infoModal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(63, 53, 39, 0.35);
+  padding: 1.5rem;
+}
+
+#infoModal.hidden {
+  display: none;
+}
+
+#infoModalCard {
+  position: relative;
+  max-width: 22rem;
+  background: #faf3e2;
+  color: #3f3527;
+  border-radius: 12px;
+  padding: 1.75rem 1.5rem 1.5rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+#infoModalClose {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.6rem;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #3f3527;
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+#infoModalClose:hover {
+  background: rgba(63, 53, 39, 0.1);
+}
+
 @media (prefers-color-scheme: dark) {
   html, body {
     background: #8f7c53;
