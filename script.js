@@ -290,6 +290,75 @@
     }
   }
 
+  // --- the odd "for sale" sign, if you scroll close enough to spot one ------
+  const SIGN_SPACING = 1700;
+  const SIGN_CLICK_MIN_SCALE = 1.3; // must be zoomed/near enough before it's clickable
+  let signHitboxes = []; // rebuilt every frame: {sx, sy, halfW, halfH, message}
+  const SIGN_MESSAGE = "Contact Red Rooster to buy this plot of land";
+
+  function drawSign(sx, sy, scale) {
+    ctx.save();
+    ctx.translate(sx, sy);
+    ctx.scale(scale, scale);
+
+    // post
+    ctx.fillStyle = "#6b4a2a";
+    ctx.fillRect(-2, -34, 4, 36);
+
+    // board
+    ctx.fillStyle = "#f7f2e3";
+    ctx.strokeStyle = "#3f3527";
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.rect(-24, -58, 48, 26);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "#b5342a";
+    ctx.font = "700 9px Arial, sans-serif";
+    ctx.fillText("FOR SALE", 0, -49);
+    ctx.fillStyle = "#3f3527";
+    ctx.font = "700 6px Arial, sans-serif";
+    ctx.fillText("— Red Rooster —", 0, -39);
+
+    ctx.restore();
+  }
+
+  function drawSigns() {
+    signHitboxes = [];
+    const hY = horizonY();
+    const [wLeft, wRight] = worldRange();
+    const startI = Math.floor(wLeft / SIGN_SPACING) - 1;
+    const endI = Math.ceil(wRight / SIGN_SPACING) + 1;
+
+    for (let i = startI; i <= endI; i++) {
+      const roll = hash2(i, 200.1);
+      if (roll > 0.22) continue; // the odd one, not a subdivision
+
+      const wx = i * SIGN_SPACING + (hash2(i, 201.2) - 0.5) * SIGN_SPACING * 0.6;
+      const sx = worldToScreenX(wx);
+      if (sx < -60 || sx > W + 60) continue;
+
+      const depth = 0.25 + hash2(i, 202.3) * 0.75;
+      const sy = hY + (H - hY) * depth;
+      const scale = (0.5 + depth * 1.3) * camera.zoom;
+
+      drawSign(sx, sy, scale);
+
+      if (scale >= SIGN_CLICK_MIN_SCALE) {
+        signHitboxes.push({
+          sx,
+          sy: sy - 29 * scale,
+          halfW: 26 * scale,
+          halfH: 30 * scale,
+          message: SIGN_MESSAGE,
+        });
+      }
+    }
+  }
+
   // --- HUD -----------------------------------------------------------------
   let lastHudUpdate = 0;
   function updateHud(now) {
@@ -311,6 +380,7 @@
     drawGround();
     drawDirtTexture();
     drawProps();
+    drawSigns();
     updateHud(now || 0);
     requestAnimationFrame(render);
   }
@@ -321,9 +391,28 @@
   let dragging = false;
   let lastDragX = 0, lastDragY = 0;
   let pinchStartDist = 0, pinchStartZoom = 1;
+  let moveDist = 0;
+  const CLICK_MAX_MOVE = 6; // below this, treat the gesture as a click, not a drag
 
   function clampZoom(z) {
     return Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z));
+  }
+
+  function handleCanvasClick(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+    for (const box of signHitboxes) {
+      if (
+        x >= box.sx - box.halfW &&
+        x <= box.sx + box.halfW &&
+        y >= box.sy - box.halfH &&
+        y <= box.sy + box.halfH
+      ) {
+        openModal(box.message);
+        return;
+      }
+    }
   }
 
   canvas.addEventListener("pointerdown", (e) => {
@@ -333,6 +422,7 @@
       dragging = true;
       lastDragX = e.clientX;
       lastDragY = e.clientY;
+      moveDist = 0;
       canvas.classList.add("grabbing");
     } else if (pointers.size === 2) {
       dragging = false;
@@ -357,6 +447,8 @@
 
     if (dragging && pointers.size === 1) {
       const dx = e.clientX - lastDragX;
+      const dy = e.clientY - lastDragY;
+      moveDist += Math.hypot(dx, dy);
       camera.x -= dx / camera.zoom;
       lastDragX = e.clientX;
       lastDragY = e.clientY;
@@ -364,6 +456,9 @@
   });
 
   function endPointer(e) {
+    if (e.type === "pointerup" && pointers.size === 1 && moveDist < CLICK_MAX_MOVE) {
+      handleCanvasClick(e.clientX, e.clientY);
+    }
     pointers.delete(e.pointerId);
     if (pointers.size === 0) {
       dragging = false;
@@ -438,22 +533,25 @@
     }
   });
 
-  // --- info modal ------------------------------------------------------------
+  // --- shared modal (about info + sign click share the same card) ------------
   const infoModal = document.getElementById("infoModal");
-  const openInfo = () => {
+  const infoModalText = document.getElementById("infoModalText");
+  const ABOUT_MESSAGE = infoModalText.textContent;
+  const openModal = (text) => {
+    infoModalText.textContent = text;
     infoModal.classList.remove("hidden");
     infoModal.setAttribute("aria-hidden", "false");
   };
-  const closeInfo = () => {
+  const closeModal = () => {
     infoModal.classList.add("hidden");
     infoModal.setAttribute("aria-hidden", "true");
   };
-  document.getElementById("infoButton").addEventListener("click", openInfo);
-  document.getElementById("infoModalClose").addEventListener("click", closeInfo);
+  document.getElementById("infoButton").addEventListener("click", () => openModal(ABOUT_MESSAGE));
+  document.getElementById("infoModalClose").addEventListener("click", closeModal);
   infoModal.addEventListener("click", (e) => {
-    if (e.target === infoModal) closeInfo();
+    if (e.target === infoModal) closeModal();
   });
   window.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && !infoModal.classList.contains("hidden")) closeInfo();
+    if (e.key === "Escape" && !infoModal.classList.contains("hidden")) closeModal();
   });
 })();
